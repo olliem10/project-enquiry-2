@@ -1,16 +1,25 @@
 import { SECTIONS } from "@/data/enquiry-schema";
 import { visibleQuestionsForSection } from "@/lib/enquiry-validation";
-import type { EnquiryData, EnquiryErrors, SectionId } from "@/types/enquiry";
+import type { EnquiryData, EnquiryErrors, QuestionId, SectionId } from "@/types/enquiry";
 import { QuestionField } from "./QuestionField";
+
+type FileQuestionId = Extract<QuestionId, "logoUpload" | "photoUpload">;
 
 interface SectionStepProps {
   section: SectionId;
   data: EnquiryData;
   errors: EnquiryErrors;
   onFieldChange: <K extends keyof EnquiryData>(id: K, value: EnquiryData[K]) => void;
+  onFileBlobsChange: (id: FileQuestionId, files: File[]) => void;
 }
 
-export function SectionStep({ section, data, errors, onFieldChange }: SectionStepProps) {
+export function SectionStep({
+  section,
+  data,
+  errors,
+  onFieldChange,
+  onFileBlobsChange,
+}: SectionStepProps) {
   const meta = SECTIONS.find((item) => item.id === section);
   if (!meta) return null;
   const questions = visibleQuestionsForSection(section, data);
@@ -36,6 +45,7 @@ export function SectionStep({ section, data, errors, onFieldChange }: SectionSte
             data={data}
             errors={errors}
             onChange={onFieldChange}
+            onFileBlobsChange={onFileBlobsChange}
           />
         ))}
       </div>

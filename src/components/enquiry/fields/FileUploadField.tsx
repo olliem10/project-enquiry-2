@@ -16,6 +16,14 @@ interface FileUploadFieldProps {
   error?: string;
   files: UploadedFileMeta[];
   onChange: (files: UploadedFileMeta[]) => void;
+  /**
+   * Called with the full, current list of raw File blobs (same order/ids
+   * as `files`) whenever the selection changes. The metadata in `files`
+   * is what lives in EnquiryData (JSON-serialisable); the actual bytes
+   * are kept here and in the parent's blob map only, for upload at
+   * submission time.
+   */
+  onRawFilesChange: (files: File[]) => void;
 }
 
 export function FileUploadField({
@@ -26,25 +34,31 @@ export function FileUploadField({
   error,
   files,
   onChange,
+  onRawFilesChange,
 }: FileUploadFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const rawFilesById = useRef<Map<string, File>>(new Map());
 
   function addFiles(list: FileList | null) {
     if (!list || list.length === 0) return;
-    const additions: UploadedFileMeta[] = Array.from(list).map((file) => ({
-      id:
+    const additions: UploadedFileMeta[] = Array.from(list).map((file) => {
+      const fileId =
         typeof crypto !== "undefined" && "randomUUID" in crypto
           ? crypto.randomUUID()
-          : `${file.name}-${file.size}-${Date.now()}`,
-      name: file.name,
-      size: file.size,
-      type: file.type,
-    }));
-    onChange([...files, ...additions]);
+          : `${file.name}-${file.size}-${Date.now()}`;
+      rawFilesById.current.set(fileId, file);
+      return { id: fileId, name: file.name, size: file.size, type: file.type };
+    });
+    const nextFiles = [...files, ...additions];
+    onChange(nextFiles);
+    onRawFilesChange(nextFiles.map((meta) => rawFilesById.current.get(meta.id)!));
   }
 
   function removeFile(fileId: string) {
-    onChange(files.filter((file) => file.id !== fileId));
+    rawFilesById.current.delete(fileId);
+    const nextFiles = files.filter((file) => file.id !== fileId);
+    onChange(nextFiles);
+    onRawFilesChange(nextFiles.map((meta) => rawFilesById.current.get(meta.id)!));
   }
 
   return (
@@ -74,6 +88,7 @@ export function FileUploadField({
               name={id}
               type="file"
               multiple
+              accept="image/png,image/jpeg,image/webp,image/gif"
               className="sr-only"
               aria-describedby={describedBy}
               onChange={(event) => {

@@ -20,14 +20,17 @@ const OTHER_FIELD_FOR: Partial<Record<QuestionId, OtherFieldKey>> = {
   contactMethods: "contactMethodsOther",
 };
 
+type FileQuestionId = Extract<QuestionId, "logoUpload" | "photoUpload">;
+
 interface QuestionFieldProps {
   question: Question;
   data: EnquiryData;
   errors: EnquiryErrors;
   onChange: <K extends keyof EnquiryData>(id: K, value: EnquiryData[K]) => void;
+  onFileBlobsChange: (id: FileQuestionId, files: File[]) => void;
 }
 
-export function QuestionField({ question, data, errors, onChange }: QuestionFieldProps) {
+export function QuestionField({ question, data, errors, onChange, onFileBlobsChange }: QuestionFieldProps) {
   const numberedLabel = (
     <>
       <span className="mr-2 tabular-nums text-muted">
@@ -103,7 +106,8 @@ export function QuestionField({ question, data, errors, onChange }: QuestionFiel
       );
     }
 
-    case "file":
+    case "file": {
+      const fileQuestionId = question.id as FileQuestionId;
       return (
         <FileUploadField
           id={question.id}
@@ -113,8 +117,10 @@ export function QuestionField({ question, data, errors, onChange }: QuestionFiel
           error={error}
           files={data[question.id] as EnquiryData["logoUpload"]}
           onChange={(files) => onChange(question.id, files)}
+          onRawFilesChange={(files) => onFileBlobsChange(fileQuestionId, files)}
         />
       );
+    }
 
     case "agreement":
       return (
