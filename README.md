@@ -28,7 +28,17 @@ Open [http://localhost:3000](http://localhost:3000) to view it.
 
 ## Status
 
-This is the project foundation only. The enquiry questionnaire and submission handling have not been built yet.
+The enquiry UI is built: a multi-step, 7-section, 35-question flow with a welcome
+screen, progress indicator, validation, conditional questions, and a review
+screen — all client-side. There is no submission backend yet: submitting logs
+the typed answers to the console and shows a confirmation screen. No database,
+auth, or file storage has been added.
+
+The real NexalField logo is in place. The supplied master export lives at
+`public/brand/nexalfield-logo-original.jpg`; `public/brand/nexalfield-logo.png`
+and `public/brand/nexalfield-icon.png` are whitespace-trimmed crops of that
+same file (no recolouring or redrawing) used by `src/components/Logo.tsx` via
+`next/image`.
 
 ## Deployment
 
