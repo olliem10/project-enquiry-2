@@ -34,10 +34,11 @@ screen — all client-side. There is no submission backend yet: submitting logs
 the typed answers to the console and shows a confirmation screen. No database,
 auth, or file storage has been added.
 
-The NexalField logo asset has not been added to the repository yet — `src/components/Logo.tsx`
-currently renders a hand-traced recreation of the icon mark shown in the reference
-images as a placeholder. Once the real logo file is added under `public/`, that
-component is the only place that needs to change.
+The real NexalField logo is in place. The supplied master export lives at
+`public/brand/nexalfield-logo-original.jpg`; `public/brand/nexalfield-logo.png`
+and `public/brand/nexalfield-icon.png` are whitespace-trimmed crops of that
+same file (no recolouring or redrawing) used by `src/components/Logo.tsx` via
+`next/image`.
 
 ## Deployment
 

@@ -16,7 +16,7 @@ export function SuccessScreen() {
           shortly to talk through next steps.
         </p>
       </div>
-      <Logo iconOnly className="opacity-60" />
+      <Logo iconOnly className="h-7 w-auto opacity-60" />
     </div>
   );
 }

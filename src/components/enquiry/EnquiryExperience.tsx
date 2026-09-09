@@ -122,7 +122,7 @@ export function EnquiryExperience() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="border-b border-card-border">
+      <header className="border-b border-card-border bg-card">
         <div className="mx-auto flex max-w-3xl items-center px-4 py-4 sm:px-6">
           <Logo />
         </div>

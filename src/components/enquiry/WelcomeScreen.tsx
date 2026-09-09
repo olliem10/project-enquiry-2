@@ -15,7 +15,7 @@ export function WelcomeScreen({ onStart }: WelcomeScreenProps) {
   return (
     <div className="bg-dot-grid rounded-2xl border border-card-border bg-card px-6 py-10 sm:px-12 sm:py-14">
       <div className="mx-auto flex max-w-xl flex-col items-center text-center">
-        <Logo className="text-xl" />
+        <Logo className="h-8 w-auto" />
 
         <p className="mt-8 text-xs font-semibold uppercase tracking-wider text-accent">
           Website Project Enquiry
