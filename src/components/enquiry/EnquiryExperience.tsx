@@ -5,13 +5,16 @@ import { Logo } from "@/components/Logo";
 import { Button } from "@/components/Button";
 import { SECTIONS, createEmptyEnquiry } from "@/data/enquiry-schema";
 import { validateAll, validateSection } from "@/lib/enquiry-validation";
-import type { EnquiryData, EnquiryErrors, SectionId, StepId } from "@/types/enquiry";
+import { submitEnquiry } from "@/server/enquiry-actions";
+import type { EnquiryData, EnquiryErrors, QuestionId, SectionId, StepId } from "@/types/enquiry";
 import { WelcomeScreen } from "./WelcomeScreen";
 import { ProgressIndicator } from "./ProgressIndicator";
 import { SectionStep } from "./SectionStep";
 import { ReviewScreen } from "./ReviewScreen";
 import { SuccessScreen } from "./SuccessScreen";
 import { ChevronLeftIcon, ChevronRightIcon } from "./icons";
+
+type FileQuestionId = Extract<QuestionId, "logoUpload" | "photoUpload">;
 
 const SECTION_ORDER: SectionId[] = SECTIONS.map((section) => section.id);
 
@@ -25,7 +28,16 @@ export function EnquiryExperience() {
   const [errors, setErrors] = useState<EnquiryErrors>({});
   const [editingFromReview, setEditingFromReview] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [reference, setReference] = useState<string | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
+
+  // Raw File blobs never live in `data` (which must stay JSON-serialisable) —
+  // they're tracked here, keyed by field, and only read at submission time.
+  const fileBlobs = useRef<Record<FileQuestionId, File[]>>({
+    logoUpload: [],
+    photoUpload: [],
+  });
 
   const currentSectionIndex = useMemo(
     () => (isSectionId(step) ? SECTION_ORDER.indexOf(step) : -1),
@@ -50,6 +62,10 @@ export function EnquiryExperience() {
     },
     [],
   );
+
+  const handleFileBlobsChange = useCallback((id: FileQuestionId, files: File[]) => {
+    fileBlobs.current[id] = files;
+  }, []);
 
   const goToStep = useCallback(
     (next: StepId) => {
@@ -102,6 +118,8 @@ export function EnquiryExperience() {
   }
 
   async function handleSubmit() {
+    if (isSubmitting) return; // guards against double-clicks / rapid re-submits
+
     const allErrors = validateAll(data);
     if (Object.keys(allErrors).length > 0) {
       const firstInvalidSection = SECTION_ORDER.find(
@@ -113,11 +131,35 @@ export function EnquiryExperience() {
     }
 
     setIsSubmitting(true);
-    // Stage 3 will connect this typed payload to the real submission system.
-    console.log("NexalField enquiry ready for submission:", data);
-    await new Promise((resolve) => setTimeout(resolve, 400));
-    setIsSubmitting(false);
-    goToStep("success");
+    setSubmitError(null);
+
+    try {
+      const formData = new FormData();
+      formData.set("answers", JSON.stringify(data));
+      for (const fieldId of ["logoUpload", "photoUpload"] as const) {
+        for (const file of fileBlobs.current[fieldId]) {
+          formData.append(`file:${fieldId}`, file);
+        }
+      }
+
+      const result = await submitEnquiry(formData);
+
+      if (!result.ok) {
+        setSubmitError(result.error);
+        if (result.fieldErrors && Object.keys(result.fieldErrors).length > 0) {
+          setErrors(result.fieldErrors);
+        }
+        setIsSubmitting(false);
+        return;
+      }
+
+      setReference(result.reference);
+      setIsSubmitting(false);
+      goToStep("success");
+    } catch {
+      setSubmitError("Something went wrong sending your enquiry. Please try again.");
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -147,6 +189,7 @@ export function EnquiryExperience() {
                   data={data}
                   errors={errors}
                   onFieldChange={handleFieldChange}
+                  onFileBlobsChange={handleFileBlobsChange}
                 />
               </div>
 
@@ -174,13 +217,14 @@ export function EnquiryExperience() {
                 onEditSection={handleEditSection}
                 onSubmit={handleSubmit}
                 isSubmitting={isSubmitting}
+                submitError={submitError}
               />
             </div>
           )}
 
           {step === "success" && (
             <div key="success" className="animate-step-in">
-              <SuccessScreen />
+              <SuccessScreen reference={reference} />
             </div>
           )}
         </div>

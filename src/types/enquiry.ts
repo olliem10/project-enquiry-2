@@ -106,13 +106,34 @@ export type Question =
   | FileQuestion
   | AgreementQuestion;
 
-/** Metadata only — no file contents are stored or uploaded anywhere at this stage. */
+/**
+ * File metadata as tracked client-side while the enquiry is in progress.
+ * The actual bytes live in a separate client-only map (see
+ * EnquiryExperience) keyed by `id`, so this stays JSON-serialisable.
+ * Once uploaded to Supabase Storage during submission, `path` is added —
+ * see StoredFileMeta below.
+ */
 export interface UploadedFileMeta {
   id: string;
   name: string;
   size: number;
   type: string;
 }
+
+/** UploadedFileMeta plus its Supabase Storage object path, as persisted with a submitted enquiry. */
+export interface StoredFileMeta extends UploadedFileMeta {
+  path: string;
+}
+
+export type EnquiryStatus = "new" | "in_progress" | "completed";
+
+export const ENQUIRY_STATUSES: EnquiryStatus[] = ["new", "in_progress", "completed"];
+
+export const ENQUIRY_STATUS_LABELS: Record<EnquiryStatus, string> = {
+  new: "New",
+  in_progress: "In Progress",
+  completed: "Completed",
+};
 
 export interface EnquiryData {
   // Section 1 — About You & Your Business
@@ -172,3 +193,9 @@ export interface EnquiryData {
 export type EnquiryErrors = Partial<Record<QuestionId, string>>;
 
 export type StepId = "welcome" | SectionId | "review" | "success";
+
+/** EnquiryData as persisted after submission: uploads carry their storage path. */
+export type StoredEnquiryData = Omit<EnquiryData, "logoUpload" | "photoUpload"> & {
+  logoUpload: StoredFileMeta[];
+  photoUpload: StoredFileMeta[];
+};

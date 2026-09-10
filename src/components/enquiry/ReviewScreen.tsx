@@ -3,15 +3,23 @@ import { visibleQuestionsForSection } from "@/lib/enquiry-validation";
 import { formatAnswer } from "@/lib/format-answer";
 import type { EnquiryData, SectionId } from "@/types/enquiry";
 import { Button } from "@/components/Button";
+import { AlertIcon } from "./icons";
 
 interface ReviewScreenProps {
   data: EnquiryData;
   onEditSection: (section: SectionId) => void;
   onSubmit: () => void;
   isSubmitting?: boolean;
+  submitError?: string | null;
 }
 
-export function ReviewScreen({ data, onEditSection, onSubmit, isSubmitting }: ReviewScreenProps) {
+export function ReviewScreen({
+  data,
+  onEditSection,
+  onSubmit,
+  isSubmitting,
+  submitError,
+}: ReviewScreenProps) {
   return (
     <div className="flex flex-col gap-8">
       <header className="flex flex-col gap-2">
@@ -76,7 +84,16 @@ export function ReviewScreen({ data, onEditSection, onSubmit, isSubmitting }: Re
           Happy with everything? Submitting sends your answers to NexalField — no payment or
           account required.
         </p>
-        <Button type="button" onClick={onSubmit} disabled={isSubmitting}>
+        {submitError && (
+          <p
+            role="alert"
+            className="flex items-center gap-1.5 rounded-lg border border-danger/30 bg-danger-soft px-3 py-2 text-sm text-danger"
+          >
+            <AlertIcon className="h-4 w-4 shrink-0" />
+            {submitError}
+          </p>
+        )}
+        <Button type="button" onClick={onSubmit} disabled={isSubmitting} aria-busy={isSubmitting}>
           {isSubmitting ? "Submitting…" : "Submit your enquiry"}
         </Button>
       </div>
